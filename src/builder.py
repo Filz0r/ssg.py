@@ -11,7 +11,7 @@ class Builder:
     def __repr__(self):
         return f"Builder({hex(id(self))})"
 
-    def copy_static_to_pub(self, src="./static", dest="./public"):
+    def copy_static_to_pub(self, src="./static", dest="./docs"):
         if os.path.exists(dest):
             shutil.rmtree(dest)
         os.mkdir(dest)
@@ -36,7 +36,7 @@ class Builder:
                 return stripped[2:].strip()
         raise Exception("No h1 header found")
 
-    def generate_page(self, from_path, template_path, dest_path):
+    def generate_page(self, from_path, template_path, dest_path, basepath="/"):
         print(f"Generating page from {from_path} to {dest_path} using {template_path}")
 
         with open(from_path, "r") as f:
@@ -52,12 +52,14 @@ class Builder:
 
         page = template.replace("{{ Title }}", title)
         page = page.replace("{{ Content }}", html_content)
+        page = page.replace('href="/', f'href="{basepath}')
+        page = page.replace('src="/', f'src="{basepath}')
 
         os.makedirs(os.path.dirname(dest_path), exist_ok=True)
         with open(dest_path, "w") as f:
             f.write(page)
 
-    def generate_pages_recursive(self, dir_path_content, template_path, dest_dir_path):
+    def generate_pages_recursive(self, dir_path_content, template_path, dest_dir_path, basepath="/"):
         for root, dirs, files in os.walk(dir_path_content):
             for file in files:
                 if file.endswith(".md"):
@@ -65,5 +67,5 @@ class Builder:
                     rel_path = os.path.relpath(from_path, dir_path_content)
                     dest_file = os.path.splitext(rel_path)[0] + ".html"
                     dest_path = os.path.join(dest_dir_path, dest_file)
-                    self.generate_page(from_path, template_path, dest_path)
+                    self.generate_page(from_path, template_path, dest_path, basepath)
 
